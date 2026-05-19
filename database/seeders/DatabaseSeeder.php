@@ -1,23 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
+use App\Models\Graduation;
+use App\Models\Student;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::factory()->admin()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@devhub.test',
+        ]);
 
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Student User',
+            'email' => 'student@devhub.test',
         ]);
+
+        $june = Graduation::factory()->open()->create([
+            'title' => 'June 2026 Convocation',
+            'ceremony_date' => '2026-06-15',
+            'fee' => 250.00,
+        ]);
+
+        Student::factory()->count(10)->verified()->for($june)->create();
+        Student::factory()->count(4)->paidUnverified()->for($june)->create();
+        Student::factory()->count(6)->for($june)->create();
+
+        Graduation::factory()->count(2)
+            ->has(Student::factory()->count(15))
+            ->create();
     }
 }
