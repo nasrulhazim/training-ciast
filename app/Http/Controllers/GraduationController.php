@@ -63,6 +63,12 @@ class GraduationController extends Controller implements HasMiddleware
                         ->orWhere('matric_card', 'like', $term);
                 });
             })
+            ->when($request->status === 'verified',
+                fn ($q) => $q->whereNotNull('verified_at'))
+            ->when($request->status === 'pending',
+                fn ($q) => $q->whereNotNull('paid_at')->whereNull('verified_at'))
+            ->when($request->status === 'not_paid',
+                fn ($q) => $q->whereNull('paid_at'))
             ->latest()
             ->paginate(15)
             ->withQueryString();

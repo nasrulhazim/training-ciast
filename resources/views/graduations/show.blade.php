@@ -77,14 +77,15 @@
 
                     <form method="GET" action="{{ route('graduations.show', $graduation) }}"
                         class="flex gap-2 flex-1">
+                        <input type="hidden" name="status" value="{{ request('status') }}">
                         <input type="text" name="search" value="{{ request('search') }}"
                             placeholder="Search name, IC, email, matric…"
                             class="rounded border-gray-300 text-sm w-full max-w-sm">
                         <button class="bg-slate-600 text-white px-3 py-2 rounded text-sm">Search</button>
 
-                        @if (request('search'))
+                        @if (request('search') || request('status'))
                             <a href="{{ route('graduations.show', $graduation) }}"
-                                class="text-sm text-slate-600 self-center">Clear</a>
+                            class="text-sm text-slate-600 self-center">Clear</a>
                         @endif
                     </form>
 
@@ -113,7 +114,32 @@
                     <p class="mt-2 text-sm text-rose-600 dark:text-rose-400">{{ $message }}</p>
                 @enderror
 
+                @php
+                    $statuses = [
+                        '' => ['label' => 'All', 'class' => 'bg-slate-100 text-slate-700'],
+                        'verified' => ['label' => 'Verified', 'class' => 'bg-green-100 text-green-700'],
+                        'pending' => ['label' => 'Pending review', 'class' => 'bg-amber-100 text-amber-700'],
+                        'not_paid' => ['label' => 'Not paid', 'class' => 'bg-slate-100 text-slate-600'],
+                    ];
+                    $current = request('status', '');
+                @endphp
 
+                <div class="flex gap-2 mb-4">
+                    @foreach ($statuses as $value => $cfg)
+                        <a href="{{ route(
+                            'graduations.show',
+                            array_filter([
+                                'graduation' => $graduation,
+                                'status' => $value ?: null,
+                                'search' => request('search'),
+                            ]),
+                        ) }}"
+                            class="px-3 py-1 text-xs rounded {{ $cfg['class'] }}
+                  {{ $current === $value ? 'ring-2 ring-indigo-500' : '' }}">
+                            {{ $cfg['label'] }}
+                        </a>
+                    @endforeach
+                </div>
 
                 <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
 
