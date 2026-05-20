@@ -64,17 +64,37 @@
             </div>
 
             <div class="px-6 py-5">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
                         Students ({{ $graduation->students->count() }})
                     </h3>
+
                     @can('create', App\Models\Student::class)
-                        <a href="{{ route('graduations.students.create', $graduation) }}"
-                           class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
-                            + Add student
-                        </a>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <form method="POST"
+                                  action="{{ route('graduations.students.import', $graduation) }}"
+                                  enctype="multipart/form-data"
+                                  class="inline-flex items-center gap-2">
+                                @csrf
+                                <input type="file" name="csv" accept=".csv,text/csv" required
+                                       class="block text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 dark:text-neutral-300 dark:file:bg-neutral-800 dark:file:text-neutral-200" />
+                                <button type="submit"
+                                        class="inline-flex items-center rounded-md bg-slate-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+                                    Import CSV
+                                </button>
+                            </form>
+
+                            <a href="{{ route('graduations.students.create', $graduation) }}"
+                               class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+                                + Add student
+                            </a>
+                        </div>
                     @endcan
                 </div>
+
+                @error('csv')
+                    <p class="mt-2 text-sm text-rose-600 dark:text-rose-400">{{ $message }}</p>
+                @enderror
 
                 <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">

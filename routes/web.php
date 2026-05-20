@@ -15,6 +15,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('graduations', GraduationController::class);
 
+    Route::post(
+        'graduations/{graduation}/students/import',
+        [StudentController::class, 'import']
+    )->name('graduations.students.import');
+
     Route::resource('graduations.students', StudentController::class);
 
     Route::patch(

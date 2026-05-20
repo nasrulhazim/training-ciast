@@ -9,9 +9,12 @@ use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Graduation;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use Spatie\SimpleExcel\SimpleExcelReader;
 
 class StudentController extends Controller implements HasMiddleware
 {
@@ -90,5 +93,42 @@ class StudentController extends Controller implements HasMiddleware
         return redirect()
             ->route('graduations.show', $graduation)
             ->with('status', 'Student removed.');
+    }
+
+    public function import(Request $request, Graduation $graduation): RedirectResponse
+    {
+        $this->authorize('create', Student::class);
+
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ]);
+
+        $imported = 0;
+        $skipped = 0;
+
+        SimpleExcelReader::create($request->file('csv')->getRealPath(), 'csv')
+            ->getRows()
+            ->each(function (array $row) use ($graduation, &$imported, &$skipped) {
+                $validator = Validator::make($row, [
+                    'name' => ['required', 'string', 'max:255'],
+                    'ic' => ['required', 'string', 'size:12', 'unique:students,ic'],
+                    'email' => ['required', 'email', 'unique:students,email'],
+                    'matric_card' => ['required', 'string', 'max:100'],
+                    'phone' => ['required', 'string', 'max:20'],
+                ]);
+
+                if ($validator->fails()) {
+                    $skipped++;
+
+                    return;
+                }
+
+                $graduation->students()->create($validator->validated());
+                $imported++;
+            });
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', "Imported {$imported}. Skipped {$skipped}.");
     }
 }
