@@ -15,8 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('graduations', GraduationController::class);
 
-    Route::resource('graduations.students', StudentController::class)
-        ->only(['show', 'edit', 'update']);
+    Route::resource('graduations.students', StudentController::class);
 
     Route::patch(
         'graduations/{graduation}/students/{student}/verify',

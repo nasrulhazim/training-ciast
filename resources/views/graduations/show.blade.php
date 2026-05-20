@@ -64,9 +64,17 @@
             </div>
 
             <div class="px-6 py-5">
-                <h3 class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
-                    Students ({{ $graduation->students->count() }})
-                </h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
+                        Students ({{ $graduation->students->count() }})
+                    </h3>
+                    @can('create', App\Models\Student::class)
+                        <a href="{{ route('graduations.students.create', $graduation) }}"
+                           class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+                            + Add student
+                        </a>
+                    @endcan
+                </div>
 
                 <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
@@ -103,12 +111,29 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-2 text-right text-sm">
-                                        @can('view', $student)
-                                            <a href="{{ route('graduations.students.show', [$graduation, $student]) }}"
-                                               class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                                View
-                                            </a>
-                                        @endcan
+                                        <div class="inline-flex items-center gap-2">
+                                            @can('view', $student)
+                                                <a href="{{ route('graduations.students.show', [$graduation, $student]) }}"
+                                                   class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                                    View
+                                                </a>
+                                            @endcan
+
+                                            @can('delete', $student)
+                                                <span class="text-neutral-300 dark:text-neutral-600">|</span>
+                                                <form method="POST"
+                                                      action="{{ route('graduations.students.destroy', [$graduation, $student]) }}"
+                                                      onsubmit="return confirm('Remove {{ $student->name }}?');"
+                                                      class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                            class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300">
+                                                        Remove
+                                                    </button>
+                                                </form>
+                                            @endcan
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

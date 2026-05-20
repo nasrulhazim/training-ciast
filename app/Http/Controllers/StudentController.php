@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Graduation;
 use App\Models\Student;
@@ -17,6 +18,22 @@ class StudentController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [new Middleware('auth')];
+    }
+
+    public function create(Graduation $graduation): View
+    {
+        $this->authorize('create', Student::class);
+
+        return view('students.create', compact('graduation'));
+    }
+
+    public function store(StoreStudentRequest $request, Graduation $graduation): RedirectResponse
+    {
+        $student = $graduation->students()->create($request->validated());
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', "Added {$student->name}.");
     }
 
     public function show(Graduation $graduation, Student $student): View
@@ -62,5 +79,16 @@ class StudentController extends Controller implements HasMiddleware
         return redirect()
             ->route('graduations.students.show', [$graduation, $student])
             ->with('status', 'Payment verified.');
+    }
+
+    public function destroy(Graduation $graduation, Student $student): RedirectResponse
+    {
+        $this->authorize('delete', $student);
+
+        $student->delete();
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', 'Student removed.');
     }
 }
