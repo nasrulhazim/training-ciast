@@ -8,6 +8,7 @@ use App\Http\Requests\StoreGraduationRequest;
 use App\Http\Requests\UpdateGraduationRequest;
 use App\Models\Graduation;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\View\View;
@@ -48,12 +49,25 @@ class GraduationController extends Controller implements HasMiddleware
             ->with('status', 'Graduation created.');
     }
 
-    public function show(Graduation $graduation): View
+    public function show(Graduation $graduation, Request $request): View
     {
         $this->authorize('view', $graduation);
-        $graduation->load('students');
 
-        return view('graduations.show', compact('graduation'));
+        $students = $graduation->students()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = '%' . $request->string('search')->trim() . '%';
+                $q->where(function ($inner) use ($term) {
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('ic', 'like', $term)
+                        ->orWhere('email', 'like', $term)
+                        ->orWhere('matric_card', 'like', $term);
+                });
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('graduations.show', compact('graduation', 'students'));
     }
 
     public function edit(Graduation $graduation): View
