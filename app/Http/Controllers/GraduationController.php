@@ -1,66 +1,84 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreGraduationRequest;
 use App\Http\Requests\UpdateGraduationRequest;
 use App\Models\Graduation;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\View\View;
 
-class GraduationController extends Controller
+class GraduationController extends Controller implements HasMiddleware
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public static function middleware(): array
     {
-        //
+        return [
+            new Middleware('auth'),
+            new Middleware('can:viewAny,App\\Models\\Graduation', only: ['index']),
+        ];
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function index(): View
     {
-        //
+        $graduations = Graduation::query()
+            ->withCount('students')
+            ->latest()
+            ->paginate(15);
+
+        return view('graduations.index', compact('graduations'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreGraduationRequest $request)
+    public function create(): View
     {
-        //
+        $this->authorize('create', Graduation::class);
+
+        return view('graduations.create');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Graduation $graduation)
+    public function store(StoreGraduationRequest $request): RedirectResponse
     {
-        //
+        $graduation = Graduation::create($request->validated());
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', 'Graduation created.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Graduation $graduation)
+    public function show(Graduation $graduation): View
     {
-        //
+        $this->authorize('view', $graduation);
+        $graduation->load('students');
+
+        return view('graduations.show', compact('graduation'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateGraduationRequest $request, Graduation $graduation)
+    public function edit(Graduation $graduation): View
     {
-        //
+        $this->authorize('update', $graduation);
+
+        return view('graduations.edit', compact('graduation'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Graduation $graduation)
+    public function update(UpdateGraduationRequest $request, Graduation $graduation): RedirectResponse
     {
-        //
+        $graduation->update($request->validated());
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', 'Graduation updated.');
+    }
+
+    public function destroy(Graduation $graduation): RedirectResponse
+    {
+        $this->authorize('delete', $graduation);
+        $graduation->delete();
+
+        return redirect()
+            ->route('graduations.index')
+            ->with('status', 'Graduation archived.');
     }
 }
