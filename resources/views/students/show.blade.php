@@ -108,6 +108,20 @@
                         </button>
                     </form>
                 @endcan
+
+                @can('revoke', $student)
+                    <form method="POST"
+                          action="{{ route('graduations.students.revoke', [$graduation, $student]) }}"
+                          onsubmit="return confirm('Revoke verification for {{ $student->name }}?')"
+                          class="mt-4">
+                        @csrf
+                        @method('PATCH')
+                        <button type="submit"
+                                class="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-700">
+                            Revoke verification
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
 

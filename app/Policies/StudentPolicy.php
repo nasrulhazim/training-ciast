@@ -36,6 +36,13 @@ class StudentPolicy
 
     public function verify(User $user, Student $student): bool
     {
-        return $user->isAdmin() && $student->payment_receipt !== null;
+        return $user->isAdmin()
+            && $student->payment_receipt !== null
+            && $student->verified_at === null;
+    }
+
+    public function revoke(User $user, Student $student): bool
+    {
+        return $user->isAdmin() && $student->verified_at !== null;
     }
 }

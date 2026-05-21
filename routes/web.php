@@ -37,6 +37,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'graduations/{graduation}/students/{student}/verify',
         [StudentController::class, 'verify']
     )->name('graduations.students.verify');
+
+    Route::patch(
+        'graduations/{graduation}/students/{student}/revoke',
+        [StudentController::class, 'revoke']
+    )->name('graduations.students.revoke');
 });
 
 require __DIR__.'/settings.php';

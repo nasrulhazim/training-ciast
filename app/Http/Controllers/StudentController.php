@@ -92,6 +92,19 @@ class StudentController extends Controller implements HasMiddleware
             ->with('status', 'Payment verified.');
     }
 
+    public function revoke(Graduation $graduation, Student $student): RedirectResponse
+    {
+        $this->authorize('revoke', $student);
+
+        $student->update(['verified_at' => null]);
+
+        Audit::record('revoked', $student);
+
+        return redirect()
+            ->route('graduations.students.show', [$graduation, $student])
+            ->with('status', 'Verification revoked. Student moved back to Pending review.');
+    }
+
     public function destroy(Graduation $graduation, Student $student): RedirectResponse
     {
         $this->authorize('delete', $student);
@@ -116,8 +129,17 @@ class StudentController extends Controller implements HasMiddleware
         $scope = $graduation->students()->whereIn('uuid', $ids);
 
         if ($action === 'verify') {
-            $toVerify = (clone $scope)->whereNotNull('payment_receipt')->get();
-            $skipped = (clone $scope)->whereNull('payment_receipt')->count();
+            $toVerify = (clone $scope)
+                ->whereNotNull('payment_receipt')
+                ->whereNull('verified_at')
+                ->get();
+
+            $skipped = (clone $scope)
+                ->where(function ($q) {
+                    $q->whereNull('payment_receipt')
+                        ->orWhereNotNull('verified_at');
+                })
+                ->count();
 
             foreach ($toVerify as $student) {
                 $student->update(['verified_at' => now()]);
@@ -126,7 +148,7 @@ class StudentController extends Controller implements HasMiddleware
 
             return redirect()
                 ->route('graduations.show', $graduation)
-                ->with('status', "Verified {$toVerify->count()}. Skipped {$skipped} (no receipt).");
+                ->with('status', "Verified {$toVerify->count()}. Skipped {$skipped} (no receipt or already verified).");
         }
 
         $rows = (clone $scope)->get();
