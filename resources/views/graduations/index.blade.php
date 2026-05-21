@@ -25,6 +25,22 @@
             </div>
         @endif
 
+        <form method="GET" action="{{ route('graduations.index') }}" class="flex gap-2 items-center">
+            <input type="text" name="search" value="{{ request('search') }}"
+                placeholder="Search by title…"
+                class="rounded border-gray-300 text-sm w-full max-w-md dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100">
+            <button class="inline-flex items-center rounded-md bg-slate-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+                Search
+            </button>
+
+            @if (request('search'))
+                <a href="{{ route('graduations.index') }}"
+                    class="text-sm text-slate-600 dark:text-neutral-300 self-center hover:underline">
+                    Clear
+                </a>
+            @endif
+        </form>
+
         <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                 <thead class="bg-neutral-50 dark:bg-neutral-800/50">
@@ -86,12 +102,16 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500 dark:text-neutral-400">
-                                No graduations yet.
-                                @can('create', App\Models\Graduation::class)
-                                    <a href="{{ route('graduations.create') }}" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                        Add the first one
-                                    </a>.
-                                @endcan
+                                @if (request('search'))
+                                    No graduations match "{{ request('search') }}".
+                                @else
+                                    No graduations yet.
+                                    @can('create', App\Models\Graduation::class)
+                                        <a href="{{ route('graduations.create') }}" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                            Add the first one
+                                        </a>.
+                                    @endcan
+                                @endif
                             </td>
                         </tr>
                     @endforelse

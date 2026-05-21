@@ -25,12 +25,17 @@ class GraduationController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(): View
+    public function index(Request $request): View
     {
         $graduations = Graduation::query()
             ->withCount('students')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = '%' . $request->string('search')->trim() . '%';
+                $q->where('title', 'like', $term);
+            })
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('graduations.index', compact('graduations'));
     }
