@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkStudentActionRequest;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Graduation;
@@ -95,6 +96,34 @@ class StudentController extends Controller implements HasMiddleware
         return redirect()
             ->route('graduations.show', $graduation)
             ->with('status', 'Student removed.');
+    }
+
+    public function bulk(BulkStudentActionRequest $request, Graduation $graduation): RedirectResponse
+    {
+        $ids = $request->validated()['ids'];
+        $action = $request->validated()['action'];
+
+        $scope = $graduation->students()->whereIn('uuid', $ids);
+
+        if ($action === 'verify') {
+            $toVerify = (clone $scope)->whereNotNull('payment_receipt')->get();
+            $skipped = (clone $scope)->whereNull('payment_receipt')->count();
+
+            foreach ($toVerify as $student) {
+                $student->update(['verified_at' => now()]);
+            }
+
+            return redirect()
+                ->route('graduations.show', $graduation)
+                ->with('status', "Verified {$toVerify->count()}. Skipped {$skipped} (no receipt).");
+        }
+
+        $removed = (clone $scope)->count();
+        $scope->delete();
+
+        return redirect()
+            ->route('graduations.show', $graduation)
+            ->with('status', "Removed {$removed}.");
     }
 
     public function export(Request $request, Graduation $graduation): StreamedResponse

@@ -25,6 +25,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         [StudentController::class, 'import']
     )->name('graduations.students.import');
 
+    Route::post(
+        'graduations/{graduation}/students/bulk',
+        [StudentController::class, 'bulk']
+    )->name('graduations.students.bulk');
+
     Route::resource('graduations.students', StudentController::class);
 
     Route::patch(

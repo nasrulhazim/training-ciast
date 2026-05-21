@@ -168,12 +168,53 @@
                     };
                 @endphp
 
+                @can('viewAny', App\Models\Student::class)
+                    <form method="POST"
+                          action="{{ route('graduations.students.bulk', $graduation) }}"
+                          id="bulk-form"
+                          onsubmit="
+                              if (document.querySelectorAll('#bulk-form input[name=\'ids[]\']:checked').length === 0) {
+                                  alert('Select at least one student.');
+                                  return false;
+                              }
+                          "
+                          class="flex gap-2 items-center mb-4">
+                        @csrf
+                        <select name="action" class="rounded border-gray-300 text-sm">
+                            <option value="verify">Verify payments</option>
+                            <option value="delete">Delete</option>
+                        </select>
+                        <button class="bg-indigo-600 text-white px-3 py-2 rounded text-sm">Apply to selected</button>
+                    </form>
+                @endcan
+
+                @foreach ($students as $student)
+                    @can('delete', $student)
+                        <form method="POST"
+                              action="{{ route('graduations.students.destroy', [$graduation, $student]) }}"
+                              id="row-delete-{{ $student->id }}"
+                              onsubmit="return confirm('Remove {{ $student->name }}?')">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    @endcan
+                @endforeach
+
                 <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
 
 
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                         <thead class="bg-neutral-50 dark:bg-neutral-800/50">
                             <tr>
+                                <th
+                                    class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
+                                    @can('viewAny', App\Models\Student::class)
+                                        <input type="checkbox"
+                                               onchange="
+                                                   document.querySelectorAll('input[name=\'ids[]\']').forEach(cb => cb.checked = this.checked)
+                                               ">
+                                    @endcan
+                                </th>
                                 <th
                                     class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
                                     {!! $sortLink('name', 'Name') !!}</th>
@@ -194,6 +235,14 @@
                         <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
                             @forelse ($students as $student)
                                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                                    <td class="px-4 py-2">
+                                        @can('viewAny', App\Models\Student::class)
+                                            <input type="checkbox"
+                                                   form="bulk-form"
+                                                   name="ids[]"
+                                                   value="{{ $student->uuid }}">
+                                        @endcan
+                                    </td>
                                     <td class="px-4 py-2 text-sm font-medium text-gray-900 dark:text-neutral-100">
                                         {{ $student->name }}
                                     </td>
@@ -232,24 +281,18 @@
 
                                             @can('delete', $student)
                                                 <span class="text-neutral-300 dark:text-neutral-600">|</span>
-                                                <form method="POST"
-                                                    action="{{ route('graduations.students.destroy', [$graduation, $student]) }}"
-                                                    onsubmit="return confirm('Remove {{ $student->name }}?');"
-                                                    class="inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
+                                                <button type="submit"
+                                                        form="row-delete-{{ $student->id }}"
                                                         class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300">
-                                                        Remove
-                                                    </button>
-                                                </form>
+                                                    Remove
+                                                </button>
                                             @endcan
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5"
+                                    <td colspan="6"
                                         class="px-4 py-6 text-center text-sm text-gray-500 dark:text-neutral-400">
                                         @if (request('search'))
                                             No students match "{{ request('search') }}".
