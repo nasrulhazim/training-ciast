@@ -18,6 +18,11 @@
                     <flux:sidebar.item icon="academic-cap" :href="route('graduations.index')" :current="request()->routeIs('graduations.*')" wire:navigate>
                         {{ __('Graduations') }}
                     </flux:sidebar.item>
+                    @if (auth()->user()?->student)
+                        <flux:sidebar.item icon="identification" :href="route('graduations.students.show', [auth()->user()->student->graduation, auth()->user()->student])" wire:navigate>
+                            {{ __('My registration') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

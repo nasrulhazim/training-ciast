@@ -18,11 +18,6 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@devhub.test',
         ]);
 
-        User::factory()->create([
-            'name' => 'Student User',
-            'email' => 'student@devhub.test',
-        ]);
-
         $june = Graduation::factory()->open()->create([
             'title' => 'June 2026 Convocation',
             'ceremony_date' => '2026-06-15',
@@ -32,6 +27,16 @@ class DatabaseSeeder extends Seeder
         Student::factory()->count(10)->verified()->for($june)->create();
         Student::factory()->count(4)->paidUnverified()->for($june)->create();
         Student::factory()->count(6)->for($june)->create();
+
+        Student::factory()->for($june)->create([
+            'name' => 'Student User',
+            'email' => 'student@devhub.test',
+        ]);
+
+        User::factory()->create([
+            'name' => 'Student User',
+            'email' => 'student@devhub.test',
+        ]);
 
         Graduation::factory()->count(2)
             ->has(Student::factory()->count(15))

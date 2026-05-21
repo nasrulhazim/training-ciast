@@ -73,4 +73,18 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasOne(Student::class);
     }
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            if ($user->is_admin) {
+                return;
+            }
+
+            Student::query()
+                ->where('email', $user->email)
+                ->whereNull('user_id')
+                ->update(['user_id' => $user->id]);
+        });
+    }
 }
