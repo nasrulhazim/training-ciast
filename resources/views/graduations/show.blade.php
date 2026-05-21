@@ -174,7 +174,7 @@
                           action="{{ route('graduations.students.bulk', $graduation) }}"
                           id="bulk-form"
                           onsubmit="
-                              if (document.querySelectorAll('#bulk-form input[name=\'ids[]\']:checked').length === 0) {
+                              if (document.querySelectorAll('input[name=&quot;ids[]&quot;]:checked').length === 0) {
                                   alert('Select at least one student.');
                                   return false;
                               }
