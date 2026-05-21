@@ -15,6 +15,8 @@ use Illuminate\View\View;
 
 class GraduationController extends Controller implements HasMiddleware
 {
+    private const SORTABLE_COLUMNS = ['name', 'ic', 'email', 'matric_card', 'created_at'];
+
     public static function middleware(): array
     {
         return [
@@ -53,6 +55,12 @@ class GraduationController extends Controller implements HasMiddleware
     {
         $this->authorize('view', $graduation);
 
+        $sort = in_array($request->sort, self::SORTABLE_COLUMNS, true)
+            ? $request->sort
+            : 'created_at';
+
+        $direction = $request->direction === 'asc' ? 'asc' : 'desc';
+
         $students = $graduation->students()
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = '%' . $request->string('search')->trim() . '%';
@@ -69,7 +77,7 @@ class GraduationController extends Controller implements HasMiddleware
                 fn ($q) => $q->whereNotNull('paid_at')->whereNull('verified_at'))
             ->when($request->status === 'not_paid',
                 fn ($q) => $q->whereNull('paid_at'))
-            ->latest()
+            ->orderBy($sort, $direction)
             ->paginate(15)
             ->withQueryString();
 

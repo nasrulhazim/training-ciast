@@ -141,6 +141,21 @@
                     @endforeach
                 </div>
 
+                @php
+                    $sort = request('sort', 'created_at');
+                    $direction = request('direction', 'desc');
+                    $sortLink = function (string $column, string $label) use ($sort, $direction) {
+                        $isActive = $sort === $column;
+                        $newDirection = $isActive && $direction === 'asc' ? 'desc' : 'asc';
+                        $arrow = $isActive ? ($direction === 'asc' ? '▲' : '▼') : '';
+                        $url = url()->current() . '?' . http_build_query(array_merge(
+                            request()->except(['sort', 'direction', 'page']),
+                            ['sort' => $column, 'direction' => $newDirection],
+                        ));
+                        return '<a href="' . $url . '" class="hover:underline">' . e($label) . ' ' . $arrow . '</a>';
+                    };
+                @endphp
+
                 <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
 
 
@@ -149,10 +164,13 @@
                             <tr>
                                 <th
                                     class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
-                                    Name</th>
+                                    {!! $sortLink('name', 'Name') !!}</th>
                                 <th
                                     class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
-                                    Matric</th>
+                                    {!! $sortLink('ic', 'IC') !!}</th>
+                                <th
+                                    class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
+                                    {!! $sortLink('matric_card', 'Matric') !!}</th>
                                 <th
                                     class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-neutral-400">
                                     Payment</th>
@@ -166,6 +184,9 @@
                                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
                                     <td class="px-4 py-2 text-sm font-medium text-gray-900 dark:text-neutral-100">
                                         {{ $student->name }}
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-500 dark:text-neutral-400">
+                                        {{ $student->ic }}
                                     </td>
                                     <td class="px-4 py-2 text-sm text-gray-500 dark:text-neutral-400">
                                         {{ $student->matric_card }}
@@ -216,7 +237,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4"
+                                    <td colspan="5"
                                         class="px-4 py-6 text-center text-sm text-gray-500 dark:text-neutral-400">
                                         @if (request('search'))
                                             No students match "{{ request('search') }}".
