@@ -15,9 +15,11 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
-                    <flux:sidebar.item icon="academic-cap" :href="route('graduations.index')" :current="request()->routeIs('graduations.*')" wire:navigate>
-                        {{ __('Graduations') }}
-                    </flux:sidebar.item>
+                    @can('viewAny', App\Models\Graduation::class)
+                        <flux:sidebar.item icon="academic-cap" :href="route('graduations.index')" :current="request()->routeIs('graduations.*')" wire:navigate>
+                            {{ __('Graduations') }}
+                        </flux:sidebar.item>
+                    @endcan
                     @php
                         $registrationCount = auth()->user()?->students()->count() ?? 0;
                     @endphp

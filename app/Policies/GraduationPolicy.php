@@ -11,12 +11,18 @@ class GraduationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->isAdmin();
     }
 
     public function view(User $user, Graduation $graduation): bool
     {
-        return true;
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $graduation->students()
+            ->where('user_id', $user->id)
+            ->exists();
     }
 
     public function create(User $user): bool
