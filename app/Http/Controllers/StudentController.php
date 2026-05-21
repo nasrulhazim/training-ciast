@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BulkStudentActionRequest;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
+use App\Models\Audit;
 use App\Models\Graduation;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,8 @@ class StudentController extends Controller implements HasMiddleware
     public function store(StoreStudentRequest $request, Graduation $graduation): RedirectResponse
     {
         $student = $graduation->students()->create($request->validated());
+
+        Audit::record('created', $student);
 
         return redirect()
             ->route('graduations.show', $graduation)
@@ -82,6 +85,8 @@ class StudentController extends Controller implements HasMiddleware
 
         $student->update(['verified_at' => now()]);
 
+        Audit::record('verified', $student);
+
         return redirect()
             ->route('graduations.students.show', [$graduation, $student])
             ->with('status', 'Payment verified.');
@@ -90,6 +95,11 @@ class StudentController extends Controller implements HasMiddleware
     public function destroy(Graduation $graduation, Student $student): RedirectResponse
     {
         $this->authorize('delete', $student);
+
+        Audit::record('deleted', $student, [
+            'name' => $student->name,
+            'ic' => $student->ic,
+        ]);
 
         $student->delete();
 
@@ -111,6 +121,7 @@ class StudentController extends Controller implements HasMiddleware
 
             foreach ($toVerify as $student) {
                 $student->update(['verified_at' => now()]);
+                Audit::record('verified', $student, ['via' => 'bulk']);
             }
 
             return redirect()
@@ -118,12 +129,19 @@ class StudentController extends Controller implements HasMiddleware
                 ->with('status', "Verified {$toVerify->count()}. Skipped {$skipped} (no receipt).");
         }
 
-        $removed = (clone $scope)->count();
+        $rows = (clone $scope)->get();
+        foreach ($rows as $student) {
+            Audit::record('deleted', $student, [
+                'via' => 'bulk',
+                'name' => $student->name,
+                'ic' => $student->ic,
+            ]);
+        }
         $scope->delete();
 
         return redirect()
             ->route('graduations.show', $graduation)
-            ->with('status', "Removed {$removed}.");
+            ->with('status', "Removed {$rows->count()}.");
     }
 
     public function export(Request $request, Graduation $graduation): StreamedResponse
