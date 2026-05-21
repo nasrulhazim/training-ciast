@@ -16,19 +16,30 @@ class UpdateStudentRequest extends FormRequest
 
     public function rules(): array
     {
-        $studentId = $this->route('student')?->id;
+        $student = $this->route('student');
+        $gradId = $student?->graduation_id;
+        $studentId = $student?->id;
 
         return [
             'name' => ['required', 'string', 'max:255'],
             'ic' => [
                 'required', 'string', 'size:12',
-                Rule::unique('students', 'ic')->ignore($studentId),
+                Rule::unique('students', 'ic')
+                    ->where(fn ($q) => $q->where('graduation_id', $gradId))
+                    ->ignore($studentId),
             ],
             'email' => [
                 'required', 'email',
-                Rule::unique('students', 'email')->ignore($studentId),
+                Rule::unique('students', 'email')
+                    ->where(fn ($q) => $q->where('graduation_id', $gradId))
+                    ->ignore($studentId),
             ],
-            'matric_card' => ['required', 'string', 'max:100'],
+            'matric_card' => [
+                'required', 'string', 'max:100',
+                Rule::unique('students', 'matric_card')
+                    ->where(fn ($q) => $q->where('graduation_id', $gradId))
+                    ->ignore($studentId),
+            ],
             'phone' => ['required', 'string', 'max:20'],
             'payment_receipt' => [
                 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048',

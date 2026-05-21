@@ -16,6 +16,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Spatie\SimpleExcel\SimpleExcelReader;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -227,9 +228,18 @@ class StudentController extends Controller implements HasMiddleware
             ->each(function (array $row) use ($graduation, &$imported, &$skipped) {
                 $validator = Validator::make($row, [
                     'name' => ['required', 'string', 'max:255'],
-                    'ic' => ['required', 'string', 'size:12', 'unique:students,ic'],
-                    'email' => ['required', 'email', 'unique:students,email'],
-                    'matric_card' => ['required', 'string', 'max:100'],
+                    'ic' => [
+                        'required', 'string', 'size:12',
+                        Rule::unique('students', 'ic')->where(fn ($q) => $q->where('graduation_id', $graduation->id)),
+                    ],
+                    'email' => [
+                        'required', 'email',
+                        Rule::unique('students', 'email')->where(fn ($q) => $q->where('graduation_id', $graduation->id)),
+                    ],
+                    'matric_card' => [
+                        'required', 'string', 'max:100',
+                        Rule::unique('students', 'matric_card')->where(fn ($q) => $q->where('graduation_id', $graduation->id)),
+                    ],
                     'phone' => ['required', 'string', 'max:20'],
                 ]);
 

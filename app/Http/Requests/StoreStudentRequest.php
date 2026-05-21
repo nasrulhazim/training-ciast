@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Models\Student;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStudentRequest extends FormRequest
 {
@@ -16,11 +17,22 @@ class StoreStudentRequest extends FormRequest
 
     public function rules(): array
     {
+        $gradId = $this->route('graduation')?->id;
+
         return [
             'name' => ['required', 'string', 'max:255'],
-            'ic' => ['required', 'string', 'size:12', 'unique:students,ic'],
-            'email' => ['required', 'email', 'unique:students,email'],
-            'matric_card' => ['required', 'string', 'max:100'],
+            'ic' => [
+                'required', 'string', 'size:12',
+                Rule::unique('students', 'ic')->where(fn ($q) => $q->where('graduation_id', $gradId)),
+            ],
+            'email' => [
+                'required', 'email',
+                Rule::unique('students', 'email')->where(fn ($q) => $q->where('graduation_id', $gradId)),
+            ],
+            'matric_card' => [
+                'required', 'string', 'max:100',
+                Rule::unique('students', 'matric_card')->where(fn ($q) => $q->where('graduation_id', $gradId)),
+            ],
             'phone' => ['required', 'string', 'max:20'],
         ];
     }

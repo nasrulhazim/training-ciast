@@ -18,9 +18,12 @@
                     <flux:sidebar.item icon="academic-cap" :href="route('graduations.index')" :current="request()->routeIs('graduations.*')" wire:navigate>
                         {{ __('Graduations') }}
                     </flux:sidebar.item>
-                    @if (auth()->user()?->student)
-                        <flux:sidebar.item icon="identification" :href="route('graduations.students.show', [auth()->user()->student->graduation, auth()->user()->student])" wire:navigate>
-                            {{ __('My registration') }}
+                    @php
+                        $registrationCount = auth()->user()?->students()->count() ?? 0;
+                    @endphp
+                    @if ($registrationCount > 0)
+                        <flux:sidebar.item icon="identification" :href="route('my-registrations.index')" :current="request()->routeIs('my-registrations.*')" wire:navigate>
+                            {{ $registrationCount > 1 ? __('My registrations') : __('My registration') }}
                         </flux:sidebar.item>
                     @endif
                 </flux:sidebar.group>

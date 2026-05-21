@@ -7,7 +7,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -66,12 +66,11 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Forward-declared — Student model arrives in step 04.
-     * Each User may have exactly one Student record (their own registration).
+     * A User may own multiple Student rows — one per graduation they registered for.
      */
-    public function student(): HasOne
+    public function students(): HasMany
     {
-        return $this->hasOne(Student::class);
+        return $this->hasMany(Student::class);
     }
 
     protected static function booted(): void
