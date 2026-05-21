@@ -60,33 +60,43 @@ class GraduationController extends Controller implements HasMiddleware
     {
         $this->authorize('view', $graduation);
 
-        $sort = in_array($request->sort, self::SORTABLE_COLUMNS, true)
-            ? $request->sort
-            : 'created_at';
+        $isAdmin = $request->user()->isAdmin();
+        $students = null;
+        $ownStudent = null;
 
-        $direction = $request->direction === 'asc' ? 'asc' : 'desc';
+        if ($isAdmin) {
+            $sort = in_array($request->sort, self::SORTABLE_COLUMNS, true)
+                ? $request->sort
+                : 'created_at';
 
-        $students = $graduation->students()
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $term = '%' . $request->string('search')->trim() . '%';
-                $q->where(function ($inner) use ($term) {
-                    $inner->where('name', 'like', $term)
-                        ->orWhere('ic', 'like', $term)
-                        ->orWhere('email', 'like', $term)
-                        ->orWhere('matric_card', 'like', $term);
-                });
-            })
-            ->when($request->status === 'verified',
-                fn ($q) => $q->whereNotNull('verified_at'))
-            ->when($request->status === 'pending',
-                fn ($q) => $q->whereNotNull('paid_at')->whereNull('verified_at'))
-            ->when($request->status === 'not_paid',
-                fn ($q) => $q->whereNull('paid_at'))
-            ->orderBy($sort, $direction)
-            ->paginate(15)
-            ->withQueryString();
+            $direction = $request->direction === 'asc' ? 'asc' : 'desc';
 
-        return view('graduations.show', compact('graduation', 'students'));
+            $students = $graduation->students()
+                ->when($request->filled('search'), function ($q) use ($request) {
+                    $term = '%' . $request->string('search')->trim() . '%';
+                    $q->where(function ($inner) use ($term) {
+                        $inner->where('name', 'like', $term)
+                            ->orWhere('ic', 'like', $term)
+                            ->orWhere('email', 'like', $term)
+                            ->orWhere('matric_card', 'like', $term);
+                    });
+                })
+                ->when($request->status === 'verified',
+                    fn ($q) => $q->whereNotNull('verified_at'))
+                ->when($request->status === 'pending',
+                    fn ($q) => $q->whereNotNull('paid_at')->whereNull('verified_at'))
+                ->when($request->status === 'not_paid',
+                    fn ($q) => $q->whereNull('paid_at'))
+                ->orderBy($sort, $direction)
+                ->paginate(15)
+                ->withQueryString();
+        } else {
+            $ownStudent = $graduation->students()
+                ->where('user_id', $request->user()->id)
+                ->first();
+        }
+
+        return view('graduations.show', compact('graduation', 'students', 'ownStudent'));
     }
 
     public function edit(Graduation $graduation): View

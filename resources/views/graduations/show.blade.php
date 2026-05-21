@@ -69,6 +69,7 @@
                 </dl>
             </div>
 
+            @can('viewAny', App\Models\Student::class)
             <div class="px-6 py-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-neutral-100">
@@ -310,6 +311,52 @@
                     {{ $students->links() }}
                 </div>
             </div>
+            @endcan
+
+            @cannot('viewAny', App\Models\Student::class)
+                <div class="px-6 py-5">
+                    @if ($ownStudent)
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-neutral-100">Your registration</h3>
+                        <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-400">Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-neutral-100">{{ $ownStudent->name }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-400">Matric</dt>
+                                <dd class="mt-1 text-sm text-gray-900 dark:text-neutral-100">{{ $ownStudent->matric_card }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-neutral-400">Status</dt>
+                                <dd class="mt-1 text-sm">
+                                    @if ($ownStudent->isVerified())
+                                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
+                                            Verified
+                                        </span>
+                                    @elseif ($ownStudent->hasPaid())
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30">
+                                            Pending review
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-slate-600/20 dark:bg-slate-500/10 dark:text-slate-300 dark:ring-slate-500/30">
+                                            Not paid
+                                        </span>
+                                    @endif
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <a href="{{ route('graduations.students.show', [$graduation, $ownStudent]) }}"
+                            class="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+                            View / upload receipt
+                        </a>
+                    @else
+                        <p class="text-sm text-gray-600 dark:text-neutral-300">
+                            You are not on the roster for this graduation. Please contact the registrar to be added.
+                        </p>
+                    @endif
+                </div>
+            @endcannot
         </div>
 
     </div>
