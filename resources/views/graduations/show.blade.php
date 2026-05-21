@@ -102,6 +102,18 @@
                                 </button>
                             </form>
 
+                            <a href="{{ route(
+                                'graduations.students.export',
+                                array_filter([
+                                    'graduation' => $graduation,
+                                    'search' => request('search'),
+                                    'status' => request('status'),
+                                ]),
+                            ) }}"
+                                class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">
+                                Export CSV
+                            </a>
+
                             <a href="{{ route('graduations.students.create', $graduation) }}"
                                 class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
                                 + Add student

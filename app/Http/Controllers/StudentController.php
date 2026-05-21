@@ -13,8 +13,10 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Spatie\SimpleExcel\SimpleExcelReader;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller implements HasMiddleware
 {
@@ -93,6 +95,51 @@ class StudentController extends Controller implements HasMiddleware
         return redirect()
             ->route('graduations.show', $graduation)
             ->with('status', 'Student removed.');
+    }
+
+    public function export(Request $request, Graduation $graduation): StreamedResponse
+    {
+        $this->authorize('viewAny', Student::class);
+
+        $query = $graduation->students()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = '%' . $request->string('search')->trim() . '%';
+                $q->where(function ($inner) use ($term) {
+                    $inner->where('name', 'like', $term)
+                        ->orWhere('ic', 'like', $term)
+                        ->orWhere('email', 'like', $term)
+                        ->orWhere('matric_card', 'like', $term);
+                });
+            })
+            ->when($request->status === 'verified',
+                fn ($q) => $q->whereNotNull('verified_at'))
+            ->when($request->status === 'pending',
+                fn ($q) => $q->whereNotNull('paid_at')->whereNull('verified_at'))
+            ->when($request->status === 'not_paid',
+                fn ($q) => $q->whereNull('paid_at'));
+
+        $filename = Str::slug($graduation->title) . '-students-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['name', 'ic', 'email', 'matric_card', 'phone', 'paid_at', 'verified_at']);
+
+            $query->lazy()->each(function (Student $student) use ($out) {
+                fputcsv($out, [
+                    $student->name,
+                    $student->ic,
+                    $student->email,
+                    $student->matric_card,
+                    $student->phone,
+                    $student->paid_at?->toIso8601String(),
+                    $student->verified_at?->toIso8601String(),
+                ]);
+            });
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function import(Request $request, Graduation $graduation): RedirectResponse

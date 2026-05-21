@@ -15,6 +15,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('graduations', GraduationController::class);
 
+    Route::get(
+        'graduations/{graduation}/students/export',
+        [StudentController::class, 'export']
+    )->name('graduations.students.export');
+
     Route::post(
         'graduations/{graduation}/students/import',
         [StudentController::class, 'import']
